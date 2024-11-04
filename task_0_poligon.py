@@ -1,7 +1,7 @@
 import os
 import json
 
-from api_tasks.basic_poligon import load_from_json, download_data, get_desired_format, post_request
+from api_tasks.basic_poligon_u import load_from_json, download_data, get_desired_format, post_request
 
 def execute_task_0():
     # get my token
