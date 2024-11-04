@@ -1,7 +1,7 @@
 from openai import OpenAI
 import json 
 import os
-from api_tasks.basic_poligon import load_from_json
+from api_tasks.basic_poligon_u import load_from_json
 import asyncio
 
 json_secrets = load_from_json(filepath=rf'{os.path.dirname(__file__)}\config.json')
@@ -33,7 +33,8 @@ async def gather_calls(list_of_calls):
 list_of_queries = [
       {'user':'What is the capital of Poland?','system':'Reply only in lowercase.'}
     , {'user':'What is the capital of France?','system':'Reply only in uppercase and elaborate on the topic.'}
-    , {'user':'What is the capital of Germany?'}]
+    , {'user':'What is the capital of Germany?'}
+    ]
 
 asyncio.run(gather_calls(list_of_queries))
 

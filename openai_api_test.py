@@ -1,7 +1,7 @@
 from openai import OpenAI
 import json 
 import os
-from api_tasks.basic_poligon import load_from_json
+from api_tasks.basic_poligon_u import load_from_json
 
 
 json_secrets = load_from_json(filepath=rf'{os.path.dirname(__file__)}\config.json')
@@ -10,6 +10,7 @@ api_key = json_secrets["open_ai_api_key"]
 client = OpenAI(
     api_key=api_key
 )
+
 
 chat_completion = client.chat.completions.create(
     model="gpt-4o-mini",
@@ -20,5 +21,18 @@ chat_completion = client.chat.completions.create(
 )
 
 print(chat_completion.choices[0].message.content)
+
+
+chat_completion_2 = client.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[{"role": "user", "content": chat_completion.choices[0].message.content}
+             ,{"role": "system", "content": "You're doing your best to explain any joke you've been told."}
+             ,{"role": "assistant", "content": "You're helpful but unenthusiastic assistant."}
+             ]
+)
+
+print(chat_completion_2.choices[0].message.content)
+
+
 # print(chat_completion.usage)
 # print(chat_completion.usage)
