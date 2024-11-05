@@ -1,5 +1,6 @@
 config.json
 prompt_notes.txt
+response.html
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
