@@ -9,6 +9,10 @@ from api_tasks.get_html_fragment import get_strings_re
 from api_tasks.website_interactions import scrape_site
 from api_tasks.basic_open_ai_calls import gather_calls
 
+## IMPROVEMENT AREAS
+# Create a version that will use embedding over prompt injection
+# Change config to env variable
+
 def prepare_falsifications(session, client, instr_url) -> str:
 
     instr_file = scrape_site(session,instr_url)

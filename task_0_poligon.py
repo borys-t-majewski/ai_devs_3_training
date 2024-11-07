@@ -3,6 +3,9 @@ import json
 
 from api_tasks.basic_poligon_u import load_from_json, download_data, get_desired_format, post_request
 
+## IMPROVEMENT AREAS
+# Change config to env variable
+
 def execute_task_0():
     # get my token
     json_secrets = load_from_json(filepath=rf'{os.path.dirname(__file__)}\config.json')
