@@ -21,7 +21,7 @@ if __name__ == "__main__":
     result = extract_text_by_id(file_path, 'human-question')
     print(result)
 
-def get_strings_re(string,pattern=r'<p id="human-question">(.*?)</p>'):
+def get_strings_re(string,pattern=r'<p id="human-question">(.*?)</p>',match_group = 1):
     import re
     match = re.search(pattern, string)
-    return match.group(1) if match else None
+    return match.group(match_group) if match else None
