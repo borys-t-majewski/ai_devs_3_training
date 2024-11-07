@@ -15,8 +15,9 @@ from api_tasks.ready_logins import login_to_website
 ## IMPROVEMENT AREAS
 # Change config to env variable
 # Explore rare random issue when answer is generated properly, but proper flag is not returned?
+# Try local model
 
-def get_this_secret_info_from_website(username, password, login_url, target_url,save_website_locally = True, max_retries = 5):
+def get_this_secret_info_from_website(username:str, password:str, login_url:str, target_url:str ,save_website_locally = True, max_retries = 5):
     session = requests.Session()
     
     website_html = scrape_site(session, login_url)

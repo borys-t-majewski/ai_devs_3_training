@@ -12,8 +12,9 @@ from api_tasks.basic_open_ai_calls import gather_calls
 ## IMPROVEMENT AREAS
 # Create a version that will use embedding over prompt injection
 # Change config to env variable
+# Try local model
 
-def prepare_falsifications(session, client, instr_url) -> str:
+def prepare_falsifications(session, client, instr_url:str) -> str:
 
     instr_file = scrape_site(session,instr_url)
 
