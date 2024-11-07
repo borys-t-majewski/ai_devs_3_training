@@ -11,8 +11,9 @@ from api_tasks.basic_open_ai_calls import gather_calls
 ## IMPROVEMENT AREAS
 # Send one open ai call to save on input tokens
 # Change config to env variable
+# Try local model
 
-def execute_task_1_3(session, client, ai_devs_key,task_name = '', data_source_url= '', endpoint_url='https://centrala.ag3nts.org/report'):
+def execute_task_1_3(session, client, ai_devs_key:str ,task_name:str = '', data_source_url:str= '', endpoint_url:str='') -> None:
 
     data_source = data_source_url.replace('TWOJ-KLUCZ',ai_devs_key)
 
