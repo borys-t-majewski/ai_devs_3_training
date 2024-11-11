@@ -1,10 +1,8 @@
 from openai import OpenAI
-import json 
 import os
 
 import asyncio
 import requests
-from bs4 import BeautifulSoup
 
 from api_tasks.basic_poligon_u import load_from_json
 from api_tasks.get_html_fragment import get_strings_re
@@ -16,8 +14,9 @@ from api_tasks.ready_logins import login_to_website
 # Change config to env variable
 # Explore rare random issue when answer is generated properly, but proper flag is not returned?
 # Try local model
+    # Local model works good with this prompt! LLAMA 8B
 
-def get_this_secret_info_from_website(username:str, password:str, login_url:str, target_url:str ,save_website_locally = True, max_retries = 5):
+def get_this_secret_info_from_website(client, username:str, password:str, login_url:str, target_url:str ,save_website_locally = True, max_retries = 5):
     session = requests.Session()
     
     website_html = scrape_site(session, login_url)
@@ -59,6 +58,8 @@ def get_this_secret_info_from_website(username:str, password:str, login_url:str,
 
 
 if __name__ == "__main__":
+    local_model = True 
+
     json_secrets = load_from_json(filepath=rf'{os.path.dirname(__file__)}\config.json')
     api_key = json_secrets["open_ai_api_key"]
 
@@ -68,7 +69,11 @@ if __name__ == "__main__":
     USERNAME = json_secrets["USERNAME"]
     PASSWORD = json_secrets["PASSWORD"]
     
+    if local_model:
+        client = OpenAI(base_url="http://127.0.0.1:1234/v1/",api_key='local')
+    else:
+        client = OpenAI(api_key=api_key)
 
-    final_secret_code = get_this_secret_info_from_website(USERNAME, PASSWORD, LOGIN_URL, TARGET_URL)
+    final_secret_code = get_this_secret_info_from_website(client, USERNAME, PASSWORD, LOGIN_URL, TARGET_URL, client)
     print(final_secret_code)
     
