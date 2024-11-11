@@ -12,6 +12,8 @@ from api_tasks.basic_open_ai_calls import gather_calls
 # Send one open ai call to save on input tokens
 # Change config to env variable
 # Try local model
+    # Local model works good with this prompt! LLAMA 8B
+# Try langfuse?
 
 def execute_task_1_3(session, client, ai_devs_key:str ,task_name:str = '', data_source_url:str= '', endpoint_url:str='') -> None:
 
@@ -71,7 +73,10 @@ def execute_task_1_3(session, client, ai_devs_key:str ,task_name:str = '', data_
     else:
         print(webhook_answer) 
 
+    return None
+
 if __name__ == "__main__":
+    local_model = False 
 
     json_secrets = load_from_json(filepath=rf'{os.path.dirname(__file__)}\config.json')
 
@@ -80,8 +85,12 @@ if __name__ == "__main__":
     task_1_3_data_source = json_secrets["task_1_3_data_source"]
     task_1_3_endpoint_url = json_secrets["task_1_3_endpoint_url"]
 
-
     session = requests.Session()
-    client = OpenAI(api_key=open_ai_api_key)
+
+    if local_model:
+        client = OpenAI(base_url="http://127.0.0.1:1234/v1/",api_key='local')
+    else:
+        client = OpenAI(api_key=open_ai_api_key)
+
     execute_task_1_3(session, client, ai_devs_key, task_name = "JSON", data_source_url= task_1_3_data_source, endpoint_url = task_1_3_endpoint_url)
 

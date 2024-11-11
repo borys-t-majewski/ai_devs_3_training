@@ -13,7 +13,8 @@ from api_tasks.basic_open_ai_calls import gather_calls
 # Create a version that will use embedding over prompt injection
 # Change config to env variable
 # Try local model
-
+    # Local model LLAMA 8B works badly - prompt needs to be reworked
+    
 def prepare_falsifications(session, client, instr_url:str) -> str:
 
     instr_file = scrape_site(session,instr_url)
@@ -78,13 +79,19 @@ def communicate_with_bot(session, client, endpoint_url='',extra_bs:str='') -> No
 
 
 if __name__ == "__main__":
+    local_model = False 
     json_secrets = load_from_json(filepath=rf'{os.path.dirname(__file__)}\config.json')
     open_ai_api_key = json_secrets["open_ai_api_key"]
     instr_url = json_secrets["task_1_2_instr_url"]
     endpoint_url = json_secrets["task_1_2_endpoint_url"]
 
     session = requests.Session()
-    client = OpenAI(api_key=open_ai_api_key)
 
+    if local_model:
+        client = OpenAI(base_url="http://127.0.0.1:1234/v1/",api_key='local')
+    else:
+        client = OpenAI(api_key=open_ai_api_key)
+
+    
     extra_bs = prepare_falsifications(session, client, instr_url)
     communicate_with_bot(session, client, endpoint_url=endpoint_url, extra_bs=extra_bs)
