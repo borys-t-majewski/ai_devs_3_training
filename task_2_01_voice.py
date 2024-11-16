@@ -11,6 +11,9 @@ from api_tasks.basic_open_ai_calls import gather_calls
 from api_tasks.whisper_interactions import create_transcripts_from_audio
 from utilities.read_save_text_functions import get_source_data_from_zip
 
+## IMPROVEMENT AREAS 
+# Try local? See https://github.com/domik82/aidevs3/blob/main/tasks/S02E01/how-to-whisper.md
+
 def ask_transcripts(client, local_folder=r'''C:\Projects\AI_DEVS_3\s_2_01_audiofiles'''):
     # client = OpenAI()
     
@@ -79,6 +82,7 @@ def execute_task_2_1(client, content:str ,task_name:str = '', endpoint_url:str='
 
 if __name__ == "__main__":
     local_model = False 
+    # (only argument for completion, not for whisper call)
 
     local_folder = r'''C:\Projects\AI_DEVS_3\s_2_01_audiofiles'''
     json_secrets = load_from_json(filepath=rf'{os.path.dirname(__file__)}\config.json')
