@@ -129,7 +129,7 @@ def validate_and_convert_image(image_url, max_size_mb=25,print_info_debug=False,
     #     return None, f"Unexpected error: {str(e)}"
     
 
-def convert_local_picture(image_path: str, max_size: int = 8000, brightness_par = 1.3, sharpness_par = 1.4, contrast_par = 2, apply_enhancing = True) -> tuple[str, str]:
+def convert_local_picture(image_path: str, max_size: int = 8000, brightness_par = 1.3, sharpness_par = 1.4, contrast_par = 2, apply_enhancing = True, output_processed_path= False)  -> tuple[str, str]:
     """
     Prepares and saves processed image for OCR
     Returns: tuple of (base64_string, processed_image_path)
