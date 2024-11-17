@@ -64,17 +64,81 @@ def read_text_from_json(file_path: str) -> dict:
     except json.JSONDecodeError:
         raise ValueError(f"Invalid JSON format in file: {file_path}")
     
-def get_source_data_from_zip(data_source_url:str= '') -> None:
+
+def extract_nested_zips(zip_data, extract_path):
+    import os 
+    import requests
+    import zipfile
+    import io
+    """
+    Recursively extract ZIP files, including any ZIP files contained within.
+    
+    Args:
+        zip_data: Either a path to a ZIP file, or a bytes-like object containing ZIP data
+        extract_path: Directory where files should be extracted
+    """
+    def _extract_nested(zip_obj, current_path):
+        for name in zip_obj.namelist():
+            # Normalize path separators and remove any leading slashes
+            safe_name = name.replace('/', os.sep).replace('\\', os.sep).lstrip(os.sep)
+            out_path = os.path.join(current_path, safe_name)
+            
+            # Skip if it's just a directory entry
+            if name.endswith('/') or name.endswith('\\'):
+                os.makedirs(out_path, exist_ok=True)
+                continue
+                
+            # Create parent directory if it doesn't exist
+            parent_dir = os.path.dirname(out_path)
+            if parent_dir:
+                os.makedirs(parent_dir, exist_ok=True)
+                
+            # Extract the file
+            data = zip_obj.read(name)
+            
+            # Check if this is a ZIP file by looking at its magic numbers
+            is_zip = data.startswith(b'PK\x03\x04')
+            
+            if is_zip:
+                # If it's a ZIP file, extract it recursively
+                try:
+                    with zipfile.ZipFile(io.BytesIO(data)) as nested_zip:
+                        nested_path = os.path.join(current_path, os.path.splitext(safe_name)[0])
+                        _extract_nested(nested_zip, nested_path)
+                except:
+                    print(f"Error unzipping {nested_path}")
+            else:
+                # If it's not a ZIP file, write it to disk
+                try:
+                    with open(out_path, 'wb') as f:
+                        f.write(data)
+                except OSError as e:
+                    print(f"Error writing file {out_path}: {e}")
+
+    # Handle both file paths and bytes-like objects
+    if isinstance(zip_data, (str, bytes, bytearray)):
+        if isinstance(zip_data, str):
+            zip_obj = zipfile.ZipFile(zip_data)
+        else:
+            zip_obj = zipfile.ZipFile(io.BytesIO(zip_data))
+        
+        with zip_obj:
+            _extract_nested(zip_obj, extract_path)
+
+def get_source_data_from_zip(data_source_url:str= '',directory_suffix:str = 's_2_01_audiofiles', extract_sublevel = True) -> None:
     import os 
     import requests
     import zipfile
     import io
     # Create the directory if it doesn't exist
-    path2use = os.path.join(os.path.dirname(__file__), 's_2_01_audiofiles')
+    path2use = os.path.join(os.path.dirname(__file__), directory_suffix)
     os.makedirs(path2use, exist_ok=True)
 
     response = requests.get(data_source_url)
     with zipfile.ZipFile(io.BytesIO(response.content)) as zf:
         # Extract all files to the specified directory
-        zf.extractall(path2use)
-
+        if extract_sublevel:
+            extract_nested_zips(response.content, path2use)
+        else:
+            zf.extractall(path2use)
+    

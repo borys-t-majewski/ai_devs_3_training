@@ -1,4 +1,4 @@
-def create_transcripts_from_audio(client, local_folder:str=''):
+def create_transcripts_from_audio(client, transcript_suffix:str = '_transcript', local_folder:str=''):
     import os
 
     # Create a directory for transcripts if it doesn't exist
@@ -12,7 +12,7 @@ def create_transcripts_from_audio(client, local_folder:str=''):
             continue
             
         audio_path = os.path.join(local_folder, filename)
-        transcript_path = os.path.join(transcript_dir, f"{os.path.splitext(filename)[0]}_transcript.txt")
+        transcript_path = os.path.join(transcript_dir, f"{os.path.splitext(filename)[0]}{transcript_suffix}.txt")
         
         # Skip if transcript already exists
         if os.path.exists(transcript_path):
