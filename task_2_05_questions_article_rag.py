@@ -9,128 +9,86 @@ import asyncio
 import requests
 
 
-from api_tasks.get_html_fragment import get_strings_re
-from api_tasks.basic_poligon_u import load_from_json, post_request
+
+# from api_tasks.basic_open_ai_calls import gather_calls
+# from api_tasks.whisper_interactions import create_transcripts_from_audio
+# from utilities.read_save_text_functions import get_source_data_from_zip
+# from utilities.generic_utils import for_every_file_in_gen
+# from utilities.html_splitter import parse_html_elements
+# from api_tasks.image_encoding_utilities import image_to_bytes
+# from api_tasks.website_interactions import download_webpage, download_and_chunk_webpage, sanitize_filename
+# from api_tasks.url_resolver import resolve_urls, normalize_download_links
+# from PIL import Image
+# from pyquery import PyQuery
+
+from api_tasks.website_ai_translation import get_website_and_describe_with_ai
+from api_tasks.basic_poligon_u import load_from_json, download_data, get_desired_format, post_request, load_from_json
 from api_tasks.basic_open_ai_calls import gather_calls
-from api_tasks.whisper_interactions import create_transcripts_from_audio
-from utilities.read_save_text_functions import get_source_data_from_zip
-from utilities.generic_utils import for_every_file_in_gen
-from utilities.html_splitter import parse_html_elements
-from api_tasks.image_encoding_utilities import image_to_bytes
-from api_tasks.website_interactions import download_webpage, download_and_chunk_webpage, sanitize_filename
-from api_tasks.url_resolver import resolve_urls, normalize_download_links
-from PIL import Image
-from pyquery import PyQuery
+from api_tasks.get_html_fragment import get_strings_re
 
 ## IMPROVEMENT AREAS 
 
 
 
-def execute_task_2_5(session, client, ai_devs_key:str ,task_name:str = '', data_source_url:str= '', endpoint_url:str='', local_folder:str = '') -> None:
+def execute_task_2_5(session, client, ai_devs_key:str , model:str = '',task_name:str = '', data_source_url:str= '', endpoint_url:str='', local_folder:str = '', questions:str = '', by_document_approach:bool = False) -> None:
     
 
-    def get_website_and_describe_with_ai(client, data_source_url:str = '', local_folder:str = '')-> list[str]:
-        import re 
-        import io 
-        import requests
-        import tempfile
-        from api_tasks.basic_open_ai_calls import gather_calls
-        from api_tasks.whisper_interactions import create_transcripts_from_audio
-        from utilities.html_splitter import parse_html_elements
-        from api_tasks.website_interactions import download_and_chunk_webpage
-        from api_tasks.url_resolver import resolve_urls, normalize_download_links
-        from pyquery import PyQuery
+    output_list = get_website_and_describe_with_ai(client,  model = model, data_source_url = data_source_url, local_folder = local_folder)
+    # Understand context length:
+    for document in output_list:
+        ic(len(document))
+        ic(document)
+    questions = download_data(questions).decode()
+    list_of_questions = [x.split('=')[1] for x in questions.split('\n') if len(x) > 0]
+    list_of_q_keys = ['0' + str(x) for x in range(1,len(list_of_questions)+1)]
+    dict_of_questions = dict(zip(list_of_q_keys, list_of_questions))
+    ic(dict_of_questions)
 
-        output_list = []
-        _, chunk_list = download_and_chunk_webpage(data_source_url,output_folder = local_folder)
+    
+    system_general_instr = f'''Answer briefly in one sentence, using knowledge base given below:'''
+    system_general_instr = f'''Answer going through your though process and reach final conclusion, using knowledge base given below:'''
 
-        for chunk_nr, chunk in enumerate(chunk_list):
-            x = PyQuery(normalize_download_links(chunk))
-            pattern = r'"([^"]*)"'
-            
-            img_url = str(x('img'))
-            audio_url = str(x('a'))
-            img_unprocessed_urls = parse_html_elements(img_url)["images"]
-            audio_unprocessed_urls = parse_html_elements(audio_url)["downloads"]
+    system_query_instr = f'''
+    Remember to use contained context clues to answer questions even if they're not correctly in body of text.
+    Example: 
+    if "Plac Mariacki" is mentioned
+    place might be Kraków
 
-            img_unprocessed_urls = [x.replace(r'"/>',r'">') for x in img_unprocessed_urls if len(x) > 0] 
-            audio_unprocessed_urls = [x.replace(r'"/>',r'">') for x in audio_unprocessed_urls if len(x) > 0]
-
-            img_url = resolve_urls(data_source_url, img_url)
-            audio_url = resolve_urls(data_source_url, audio_url)
-
-            img_list = re.findall(pattern, img_url)
-            audio_list = re.findall(pattern, audio_url)
-
-            if len(img_list) > 0:
-                pic_questions = []
-                for img in img_list:
-                    pic_question = {
-                    'user':[
-                    {'type':'text','text':'Please describe the picture below.'}
-                    ,{'type':'image','url':img}
-                    ],'system':'Reply briefly but do try to describe all apparent features.'
-                    }
-                    pic_questions.append(pic_question)
-
-                my_answers = asyncio.run(gather_calls(pic_questions,client = client, tempature=.4, model = model, force_refresh=False))
-
-                for i, img in enumerate(img_unprocessed_urls):
-                    chunk = chunk.replace(img, my_answers[i])
-            
-            if len(audio_list) > 0:
-                audio_questions = []
-                for file in [f for f in audio_list if len(f) > 0]:
-
-                    temp_dir = tempfile.gettempdir()
-                    temp_path = os.path.join(temp_dir, "temp_audio.mp3")
-                    
-                    response = requests.get(file, stream=True)
-                    response.raise_for_status()  # Raises an HTTPError if the status is 4xx, 5xx
-                    
-                    # Save to temporary file
-                    with open(temp_path, 'wb') as f:
-                        for sub_file in response.iter_content(chunk_size=8192):
-                            if sub_file:
-                                f.write(sub_file)
-
-                    create_transcripts_from_audio(client, transcript_suffix = '_transcript', local_folder=temp_dir)
-                    print(temp_dir)
-                    with open(os.path.join(temp_dir,'transcripts','temp_audio_transcript.txt'), encoding='utf-8') as f:
-                        transcript = f.read()
-
-                    audio_questions.append(transcript)
-                for s, script in enumerate(audio_unprocessed_urls):
-
-                    chunk = chunk.replace(script.replace('''download="">''','''download>'''), audio_questions[s])
+    if "Pałac Kultury" is mentioned
+    place might be Warszawa
 
 
-            ic(f'''
-            Images processed {img_unprocessed_urls}
-            Files processed {audio_unprocessed_urls}
-            ''')
-            outcome = PyQuery(chunk).text()
-            ic(outcome)
-            output_list.append(outcome)
+    '''
+    if by_document_approach:
+        for question in dict_of_questions.keys():
+            ic(f'Considering question: {dict_of_questions[question]}')
+            for document in output_list:
+                ic(f'Document of length {len(document)}')
 
-        return output_list
-    output_list = get_website_and_describe_with_ai(client, data_source_url = data_source_url, local_folder = local_folder)
-        
+                query = [{
+                'user':f'{dict_of_questions[question]}','assistant':'','system':f'''
+                {system_general_instr} <KNOWLEDGE> {document} </KNOWLEDGE>. {system_query_instr}
+                It's possible there is no information in dataset, in this case, answer only one word: NOIDEA 
+                '''
+                }]
+                answer = asyncio.run(gather_calls(query,client = client, tempature=.3, model = model))
+                if answer[0] != 'NOIDEA':
+                    dict_of_questions[question] = answer[0]
+                    break
+        ic(dict_of_questions)
+    else:
+        kp = '----\n'.join(output_list)
+        for question in dict_of_questions.keys():
+            ic(f'Considering question: {dict_of_questions[question]}')
+            query = [{
+            'user':f'{dict_of_questions[question]}','assistant':'','system':f'''
+            {system_general_instr} <KNOWLEDGE> {kp} </KNOWLEDGE>.{system_query_instr}
+            '''
+            }]
+            answer = asyncio.run(gather_calls(query,client = client, tempature=.3, model = model))
+            dict_of_questions[question] = answer[0]
 
-        
-
-        
-
-
-
-    # for each chunk:
-    #     check if they have links to images or audio
-    #     if they do, add short description of images / transcription as replacement for links
-    #     would be nice to have it be a generic function that reads in text html and returns text html with realize links for the future
-            # extract unique links 
-            # describe'em 
-            # substitute them in text reprsentation with some tags like [IMAGE] [/IMAGE] - not to confuse with html tags ideally, although they should be cleaned already/
-    # add pyquery(htmlstring).text() to convert to raw text after we get rid of html tags
+        ic(dict_of_questions)            
 
     # then add all of them to rag? without rag we'll have to actually have some kind of loop by questions, to see if it's answered - make model say if there's no info
     # for each page:
@@ -140,20 +98,20 @@ def execute_task_2_5(session, client, ai_devs_key:str ,task_name:str = '', data_
 
 
 
-    # json_apt_format = {
-    #     "task": task_name,
-    #     "apikey": ai_devs_key,
-    #     "answer": final_answer
-    # }
-    # print(json.dumps(json_apt_format))
+    json_apt_format = {
+        "task": task_name,
+        "apikey": ai_devs_key,
+        "answer": dict_of_questions
+    }
+    ic(json.dumps(json_apt_format))
 
-    # webhook_answer = post_request(endpoint_url, json.dumps(json_apt_format))
-    # if str(webhook_answer) == '<Response [200]>':
-    #     print(get_strings_re(webhook_answer.content.decode(),pattern=r'{{FLG:(.*?)}}'))
-    # else:
-    #     print(webhook_answer)
+    webhook_answer = post_request(endpoint_url, json.dumps(json_apt_format))
+    if str(webhook_answer) == '<Response [200]>':
+        print(get_strings_re(webhook_answer.content.decode(),pattern=r'{{FLG:(.*?)}}'))
+    else:
+        ic(webhook_answer)
 
-    #     print(webhook_answer.content)
+        ic(webhook_answer.content)
 
 if __name__ == "__main__":
     local_model = False 
@@ -170,6 +128,7 @@ if __name__ == "__main__":
     endpoint_url = json_secrets["task_2_5_endpoint_url"]
     
     model = "gpt-4o-mini"
+    # model = "gpt-4o"
     task_name = 'arxiv'
     session = requests.Session()
     
@@ -180,7 +139,7 @@ if __name__ == "__main__":
     if model == '_local_model_':
         client = OpenAI(base_url="http://127.0.0.1:1234/v1/",api_key='local')
 
-    execute_task_2_5(session, client, ai_devs_key = ai_devs_key ,task_name = task_name, data_source_url = data_source, endpoint_url = endpoint_url, local_folder = local_folder)
+    execute_task_2_5(session, client, model = model, ai_devs_key = ai_devs_key ,task_name = task_name, data_source_url = data_source, endpoint_url = endpoint_url, local_folder = local_folder, questions = questions, by_document_approach = True)
 
 
 

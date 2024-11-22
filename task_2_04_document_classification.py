@@ -16,6 +16,7 @@ from api_tasks.image_encoding_utilities import image_to_bytes
 from PIL import Image
 
 ## IMPROVEMENT AREAS 
+
 def task_splitter(file_path,extension_dictionary = {'txt':'text','png':'vision','mp3':'audio'},no_expansion_dict = 'text'):
     import os
     extension = os.path.splitext(file_path)
