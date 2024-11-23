@@ -63,3 +63,4 @@ if __name__ == "__main__":
     preceding_prompt = 'You will receive description in polish, follow it and generate a picture in oldschool style, stylized like a draft.'
 
     execute_task_2_3(session, client, ai_devs_key, 'robotid', data_source_url=data_source_url, endpoint_url=endpoint_url, preceding_prompt=preceding_prompt)
+    

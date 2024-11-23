@@ -69,12 +69,12 @@ if __name__ == "__main__":
 
         my_questions = [
           {'user':'What is the capital of India?','system':'Reply only in lowercase.'}
-          ,{'user':[
-                 {'type':'text','text':'please describe the picture below'}
-                ,{'type':'image','url':irrelevant_internet_picture}
-                ]
-            ,'system':'Reply only in uppercase and describe the picture. Be sure to be very impressed.'}
-         ,{'user':f'{irrelevant_internet_picture}','system':'Reply only in snakecase and describe the picture.'}
+        #   ,{'user':[
+        #          {'type':'text','text':'please describe the picture below'}
+        #         ,{'type':'image','url':irrelevant_internet_picture}
+        #         ]
+            # ,'system':'Reply only in uppercase and describe the picture. Be sure to be very impressed.'}
+        #  ,{'user':f'{irrelevant_internet_picture}','system':'Reply only in snakecase and describe the picture.'}
            #This is supposed to not work
          ,{'user':[
                  {'type':'text','text':'please describe the picture below'}

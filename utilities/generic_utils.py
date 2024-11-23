@@ -1,6 +1,7 @@
 
 from typing import Iterator
 import os 
+from icecream import ic
 
 def for_every_file_in_gen(
     directory: str,
@@ -21,17 +22,20 @@ def for_every_file_in_gen(
     Yields:
         Full path to each matching file
     """
-    supported_formats = [s.replace('.','').lower() for s in supported_formats]
+    if isinstance(supported_formats, str):
+        supported_formats = (supported_formats,)
+    if supported_formats is not None:
+        supported_formats = [s.replace('.','').lower() for s in supported_formats]
+
+
     if recursive:
         # Walk through directory and subdirectories
         for root, _, files in os.walk(directory):
             for filename in files:
                 file_path = os.path.join(root, filename)
-                
                 # Get file extension (or empty string if none)
                 _, ext = os.path.splitext(filename)
-                ext = ext.replace('.','')
-
+                ext = ext.replace('.','').lower()
                 # Check if file should be included
                 if supported_formats is None:
                     # Include all files

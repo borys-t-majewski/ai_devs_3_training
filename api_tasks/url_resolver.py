@@ -123,22 +123,6 @@ def normalize_download_links(full_text):
     return d.outer_html()
 
 
-# def get_links
-def normalize_download_link(html_string):
-    from pyquery import PyQuery as pq
-    
-    d = pq(html_string)
-    
-    # Get the link element (whether it's in a p tag or not)
-    link = d('a')
-    
-    # Normalize the download attribute
-    if 'download' in link.attr:
-        link.attr('download', '')  # Set to empty string
-    
-    # You can choose to either:
-    # 1. Always wrap in p:
-    return f'<p>{link.outer_html()}</p>'
 
 
 
