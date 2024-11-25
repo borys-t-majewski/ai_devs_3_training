@@ -5,11 +5,15 @@ from langchain.document_loaders import (
     PyPDFLoader,
     DirectoryLoader
 )
+
+
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import Chroma
 from langchain.chains import RetrievalQA
-from langchain.llms import OpenAI
+# from langchain.llms import OpenAI
+from langchain_community.llms import OpenAI
+
 from langchain.prompts import PromptTemplate
 from typing import List, Dict, Optional
 import os
@@ -27,7 +31,9 @@ class RAGSystem:
         """
         self.openai_api_key = openai_api_key
         os.environ["OPENAI_API_KEY"] = openai_api_key
-        self.embeddings = OpenAIEmbeddings()
+        self.embeddings = OpenAIEmbeddings(model = 'text-embedding-3-small')
+        # self.embeddings = OpenAIEmbeddings()
+
         self.llm = OpenAI(temperature=temperature)
         self.vector_store = None
         self.nr_of_docs = 0
