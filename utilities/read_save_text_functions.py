@@ -65,7 +65,7 @@ def read_text_from_json(file_path: str) -> dict:
         raise ValueError(f"Invalid JSON format in file: {file_path}")
     
 
-def extract_nested_zips(zip_data, extract_path):
+def extract_nested_zips(zip_data, extract_path, pwd = ''):
     import os 
     import requests
     import zipfile
@@ -77,7 +77,7 @@ def extract_nested_zips(zip_data, extract_path):
         zip_data: Either a path to a ZIP file, or a bytes-like object containing ZIP data
         extract_path: Directory where files should be extracted
     """
-    def _extract_nested(zip_obj, current_path):
+    def _extract_nested(zip_obj, current_path,pwd=''):
         for name in zip_obj.namelist():
             # Normalize path separators and remove any leading slashes
             safe_name = name.replace('/', os.sep).replace('\\', os.sep).lstrip(os.sep)
@@ -102,9 +102,14 @@ def extract_nested_zips(zip_data, extract_path):
             if is_zip:
                 # If it's a ZIP file, extract it recursively
                 try:
-                    with zipfile.ZipFile(io.BytesIO(data)) as nested_zip:
-                        nested_path = os.path.join(current_path, os.path.splitext(safe_name)[0])
-                        _extract_nested(nested_zip, nested_path)
+                    try:
+                        with zipfile.ZipFile(io.BytesIO(data),pwd=pwd) as nested_zip:
+                            nested_path = os.path.join(current_path, os.path.splitext(safe_name)[0])
+                            _extract_nested(nested_zip, nested_path)
+                    except:
+                        with zipfile.ZipFile(io.BytesIO(data)) as nested_zip:
+                            nested_path = os.path.join(current_path, os.path.splitext(safe_name)[0])
+                            _extract_nested(nested_zip, nested_path)
                 except:
                     print(f"Error unzipping {nested_path}")
             else:
@@ -123,9 +128,9 @@ def extract_nested_zips(zip_data, extract_path):
             zip_obj = zipfile.ZipFile(io.BytesIO(zip_data))
         
         with zip_obj:
-            _extract_nested(zip_obj, extract_path)
+            _extract_nested(zip_obj, extract_path,pwd=pwd)
 
-def get_source_data_from_zip(data_source_url:str= '',directory_suffix:str = 's_2_01_audiofiles', extract_sublevel = True) -> None:
+def get_source_data_from_zip(data_source_url:str= '',directory_suffix:str = 's_2_01_audiofiles', extract_sublevel = True, try_pwd = '') -> None:
     import os 
     import requests
     import zipfile
@@ -138,7 +143,13 @@ def get_source_data_from_zip(data_source_url:str= '',directory_suffix:str = 's_2
     with zipfile.ZipFile(io.BytesIO(response.content)) as zf:
         # Extract all files to the specified directory
         if extract_sublevel:
-            extract_nested_zips(response.content, path2use)
+            extract_nested_zips(response.content, path2use,pwd=try_pwd)
         else:
-            zf.extractall(path2use)
-    
+            if len(try_pwd)>0:
+                try:
+                    zf.extractall(path2use,pwd=try_pwd)
+                except:
+                    zf.extractall(path2use)
+            else:
+                zf.extractall(path2use)
+        
