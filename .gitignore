@@ -11,7 +11,11 @@ exploring_login_website_example.py
 task_0_outdated.py
 image_encoding_utilities.py
 image_processor.py
+task_0_ts_to_python_translator.py
+test_html.py
+test_graph_db.py
 
+improvement_points.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
