@@ -50,7 +50,7 @@ def code_list_to_jsonl(l:list, filename = "input_finetune"):
 
 def prepare_finetune_format_per_entry(  input:str
                                       , label:str
-                                      , system_agenda:str = ""):
+                                      , system_agenda:str = "") -> dict[str, list[dict[str, str]]]:
     if label not in ("correct", "incorrect"):
         raise Exception("Not valid label - only correct or incorrect")
     return {"messages": [ {"role": "system", "content": system_agenda}

@@ -130,13 +130,16 @@ def extract_nested_zips(zip_data, extract_path, pwd = ''):
         with zip_obj:
             _extract_nested(zip_obj, extract_path,pwd=pwd)
 
-def get_source_data_from_zip(data_source_url:str= '',directory_suffix:str = 's_2_01_audiofiles', extract_sublevel = True, try_pwd = '') -> None:
+def get_source_data_from_zip(data_source_url:str= '',directory_suffix:str = 's_2_01_audiofiles', extract_sublevel = True, try_pwd = '', output_dir:str = None) -> None:
     import os 
     import requests
     import zipfile
     import io
     # Create the directory if it doesn't exist
-    path2use = os.path.join(os.path.dirname(__file__), directory_suffix)
+    if output_dir is None:
+        path2use = os.path.join(os.path.dirname(__file__), directory_suffix)
+    else:
+        path2use = output_dir
     os.makedirs(path2use, exist_ok=True)
 
     response = requests.get(data_source_url)

@@ -106,6 +106,7 @@ if __name__ == "__main__":
 
     task_3_5_data_source = json_secrets["task_3_5_data_source"]
     task_3_5_endpoint_url = json_secrets["task_3_5_endpoint_url"]
+    # after setup, just have to launch desktop and run first one I have on AI_Devs_3_5
     neo4js_password = json_secrets["neo4j_ai_devs_db_password"]
 
     graph_db = Neo4jGraphDB(
