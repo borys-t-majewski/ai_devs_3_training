@@ -2,9 +2,12 @@ config.json
 prompt_notes.txt
 response.html
 response_bot_ony_maps.txt
+azyl_notes.txt
+
 
 # not_relevant programs
 quick_test.py
+_task_x_0x_template.py
 
 openai_api_test.py
 exploring_login_website_example.py
