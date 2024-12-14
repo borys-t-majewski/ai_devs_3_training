@@ -4,6 +4,7 @@ import os
 import io
 from base64 import b64encode
 import asyncio
+from icecream import ic
 
 from api_tasks.image_encoding_utilities import validate_and_convert_image
 import time
@@ -87,7 +88,9 @@ def retry_ai_call(max_retries=3, delay=1, logging=True,fatal=False):
                     response = await func(*args, **kwargs)
                     
                     # if not response.content:
-                    if len(response) == 0:
+                    # if len(response) == 0:
+                    # to test if it fully works
+                    if response is not None:
                         if logging:
                             print(f"Empty content received on attempt {retries + 1}")
                             print(f"Full response: {response}")
@@ -96,7 +99,7 @@ def retry_ai_call(max_retries=3, delay=1, logging=True,fatal=False):
                         continue
                         
                     if logging:
-                        if retries>0 and len(response)>0:
+                        if retries>0 and response is not None:
                             print(f"Successful response after {retries} retries")
                     
                     return response
@@ -127,10 +130,12 @@ def retry_ai_call(max_retries=3, delay=1, logging=True,fatal=False):
     return decorator
 
 @async_cached_result(ttl=timedelta(hours=6))
-@retry_ai_call(max_retries=3, delay=1)
+# @retry_ai_call(max_retries=3, delay=1)
 async def opai_call(user_message="Tell me anything"
                     , system_message="You're a helpful assistant. Reply briefly."
                     , assistant_message="You're helpful assistant."
+                    , tools = None
+                    , tool_choice = "auto"
                     , model = "gpt-4o-mini"
                     , client = None
                     , provider:str=''
@@ -156,6 +161,9 @@ async def opai_call(user_message="Tell me anything"
             provider = 'openai'
         if "claude" in model:
             provider = 'anthropic'
+    
+    if tools is None:
+        tool_choice = None
 
     if isinstance(user_message,list):
         user_message_l = copy.deepcopy(user_message)
@@ -192,7 +200,6 @@ async def opai_call(user_message="Tell me anything"
                 del query_part["local_path"]
                 query_part["type"] = "image"
                 
-
     # Dict passed - adding all this image boilerplate
     if isinstance(user_message,str):
         user_message_l = [{"type": "text","text": user_message}]
@@ -204,20 +211,46 @@ async def opai_call(user_message="Tell me anything"
         system_message_l = [{"type": "text","text": system_message}]
 
     if provider == 'openai':
-        chat_completion = client.chat.completions.create(
-            model=model
-            ,temperature=temperature
-            ,max_tokens = max_tokens
-            ,messages=[
-                    {"role":"user", "content": user_message_l}
-                    ,{"role": "system", "content": system_message_l}
-                    ,{"role": "assistant", "content": assistant_message_l}
-                    ]
+        if tools is None:
+            chat_completion = client.chat.completions.create(
+                model=model
+                ,temperature=temperature
+                ,max_tokens = max_tokens
+                ,messages=[
+                        {"role":"user", "content": user_message_l}
+                        ,{"role": "system", "content": system_message_l}
+                        ,{"role": "assistant", "content": assistant_message_l}
+                        ]
+            ).choices[0].message.content
 
-        ).choices[0].message.content
+        else:
+            chat_completion = client.chat.completions.create(
+                model=model
+                ,temperature=temperature
+                ,max_tokens = max_tokens
+                ,messages=[
+                        {"role":"user", "content": user_message_l}
+                        ,{"role": "system", "content": system_message_l}
+                        ,{"role": "assistant", "content": assistant_message_l}
+                        ]
+                ,tools = tools
+                ,tool_choice = tool_choice
+            ).choices[0].message
+
+
+            tool_choice = chat_completion.tool_calls
+            # ic(tools)
+            # ic(tool_choice)
+            # ic(chat_completion)
+            # ic(chat_completion)
+            # for call in chat_completion:
+            #     print(call)
+
+        return chat_completion
+
 
     if provider == 'anthropic':
-        chat_completion = client.messages.create(
+        chat_completion_obj = client.messages.create(
              model=model
             ,max_tokens = max_tokens
             ,temperature = temperature
@@ -228,18 +261,22 @@ async def opai_call(user_message="Tell me anything"
                     ]
         ).content
 
+        chat_completion = chat_completion_obj.content
         try:
             chat_completion = chat_completion[0].text
         except:
             print('Can not convert')
 
 
+
+
+
     return chat_completion
 
 
-async def gather_calls(list_of_calls, client = None, model = "gpt-4o-mini", tempature: float = 0.4, max_tokens:int = 4096, force_refresh = True):
+async def gather_calls(list_of_calls, client = None, model = "gpt-4o-mini", tempature: float = 0.4, max_tokens:int = 4096, force_refresh = True, tools = None):
     # Run multiple fetches concurrently
-    calls = [opai_call(**{k+'_message':v for k,v in lx.items() if v is not None}, client = client, model = model, temperature=tempature, max_tokens=max_tokens,force_refresh=force_refresh) for lx in list_of_calls]
+    calls = [opai_call(**{k+'_message':v for k,v in lx.items() if v is not None}, client = client, model = model, temperature=tempature, max_tokens=max_tokens,force_refresh=force_refresh, tools = tools) for lx in list_of_calls]
     results = await asyncio.gather(*calls)
     return results
 

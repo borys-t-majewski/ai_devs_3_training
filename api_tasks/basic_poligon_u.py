@@ -20,11 +20,14 @@ def load_from_json(filepath: str = 'config.json') -> Dict[str, Any]:
     except FileNotFoundError:
         raise FileNotFoundError(f"Secrets file not found: {filepath}")
     
-def download_data(url:str):
+def download_data(url:str, decode = False):
     import requests
     response = requests.get(url)
     if response.status_code == 200:
-        return response.content
+        if decode:
+            return response.content.decode()
+        else:
+            return response.content
     else:
         raise Exception(f"Failed to download content. Status code: {response.status_code}")
     
